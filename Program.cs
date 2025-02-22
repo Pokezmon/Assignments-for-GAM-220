@@ -1,63 +1,47 @@
-﻿using System;
+﻿using Fixed_text_Adventure;
+using System;
 
-class Program
+namespace Fixed_text_Adventure
 {
-    static void Main()
+    class Program
     {
-        bool playAgain = true;
-
-        while (playAgain)
+        static void Main()
         {
-            // Generate a random number between 1 and 100
-            Random random = new Random();
-            int randomNumber = random.Next(1, 101);
-            int numberOfGuesses = 0;
-            bool correctGuess = false;
+            Room glade = new("Shaded Glade", "A densely packed forest with dim lighting. For some reason there is a locked door here");
+            Room cave = new("Dark Cave", "A cold, damp cave with echoes of dripping water.", true);
+            glade.AddExit("north", cave);
+            cave.AddExit("south", glade);
 
-            Console.WriteLine("Welcome to the Number Guessing Game!");
-            Console.WriteLine("I have randomly chosen a number between 1 and 100.");
-            Console.WriteLine("Can you guess what it is?");
+            Item key = new("Key", "An old rusty key.");
+            cave.AddRoomResident(key);
 
-            while (!correctGuess)
+            Lever lever = new();
+            glade.AddRoomResident(lever);
+            lever.OnFlip += () => cave.Unlock();
+
+            Player player = new(glade);
+            Console.WriteLine("Welcome to Fallout: NORAD.");
+            player.CurrentRoom.Inspect();
+
+            while (true)
             {
-                Console.Write("Enter your guess: ");
-                string userInput = Console.ReadLine();
-                numberOfGuesses++;
+                Console.Write("> ");
+                string input = Console.ReadLine()?.Trim().ToLower() ?? "";
+                string[] parts = input.Split(' ', 2);
+                string command = parts[0];
+                string argument = parts.Length > 1 ? parts[1] : "";
 
-                if (int.TryParse(userInput, out int userGuess))
+                switch (command)
                 {
-                    if (userGuess < 1 || userGuess > 100)
-                    {
-                        Console.WriteLine("Invalid guess! Please enter a number between 1 and 100.");
-                    }
-                    else if (userGuess < randomNumber)
-                    {
-                        Console.WriteLine("Too low! Try again.");
-                    }
-                    else if (userGuess > randomNumber)
-                    {
-                        Console.WriteLine("Too high! Try again.");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Congratulations! You guessed the correct number in {numberOfGuesses} guesses.");
-                        correctGuess = true;
-                    }
+                    case "look": player.CurrentRoom.Inspect(); break;
+                    case "take": player.TakeItem(argument); break;
+                    case "drop": player.DropItem(argument); break;
+                    case "inventory": player.ShowInventory(); break;
+                    case "flip": if (lever != null) lever.Flip(); break;
+                    case "north": case "south": player.Move(command); break;
+                    case "quit": return;
+                    default: Console.WriteLine("Unknown command."); break;
                 }
-                else
-                {
-                    Console.WriteLine("Invalid input! Please enter a valid number.");
-                }
-            }
-
-            // Ask if the user wants to play again
-            Console.Write("Would you like to play again? (yes/no): ");
-            string playAgainInput = Console.ReadLine().ToLower();
-
-            if (playAgainInput != "yes")
-            {
-                playAgain = false;
-                Console.WriteLine("Thank you for playing! Goodbye!");
             }
         }
     }
